@@ -22,7 +22,9 @@
 #include "esp_netif.h"
 #include "esp_tls.h"
 #include "esp_check.h"
-
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+#include "esp_adc/adc_oneshot.h"
  //1
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
@@ -47,7 +49,8 @@ static adc_oneshot_unit_handle_t adc1_handle;
  */
 
 static const char *TAG = "example";
-
+char analogtxt[128];
+int adc_raw;
 //2
 char analogtxt[128];
 int adc_raw;
@@ -98,6 +101,13 @@ static esp_err_t basic_auth_get_handler(httpd_req_t *req)
     char *buf = NULL;
     size_t buf_len = 0;
     basic_auth_info_t *basic_auth_info = req->user_ctx;
+   // อ่านค่าจาก ADC
+    adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &adc_raw);
+    // อัพเดท
+    sprintf(analogtxt, "<H1> Voltage = %d </H1>", adc_raw);
+    // ส่งข้อมูลไปยังผู้ใช้
+    httpd_resp_send(req, analogtxt, HTTPD_RESP_USE_STRLEN);
+    return ESP_OK;
 
     buf_len = httpd_req_get_hdr_value_len(req, "Authorization") + 1;
     if (buf_len > 1) {
